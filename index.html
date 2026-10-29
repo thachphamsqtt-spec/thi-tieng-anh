@@ -2,12 +2,19 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mil-English">
   <title>Ôn Tập 50 Câu Hỏi & Đáp Án Tiếng Anh Quân Đội | Mil-English Pro</title>
   <meta name="description" content="Ứng dụng thông minh ôn tập 50 câu hỏi & đáp án tiếng Anh quân đội: Chuyển đổi số, Đổi mới sáng tạo, Chế độ ngày và tuần. Kèm từ vựng, phát âm, flashcard, trắc nghiệm và tra cứu.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Fonts load without blocking the app (slow mobile networks) -->
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="dark-theme">
@@ -47,19 +54,30 @@
         </div>
       </div>
 
+      <!-- Settings menu toggle (mobile only) -->
+      <button id="settingsMenuBtn" class="btn-icon settings-menu-btn" title="Cài đặt" aria-label="Mở cài đặt" aria-expanded="false" aria-controls="headerActions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+
       <!-- Header Actions -->
-      <div class="header-actions">
+      <div class="header-actions" id="headerActions">
         <button id="ipaToggleBtn" class="btn-icon" title="Bật/Tắt hiển thị phiên âm IPA" aria-label="Bật/Tắt IPA">
           <span class="ipa-indicator">IPA</span>
+          <span class="menu-label">Phiên âm IPA</span>
         </button>
         <button id="audioSpeedBtn" class="btn-icon" title="Tốc độ phát âm tiếng Anh" aria-label="Tốc độ giọng đọc">
           <span class="speed-indicator">1.0x</span>
+          <span class="menu-label">Tốc độ đọc</span>
         </button>
         <button id="soundToggleBtn" class="btn-icon" title="Bật/Tắt hiệu ứng âm thanh" aria-label="Âm thanh hiệu ứng">
           <svg class="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
           </svg>
+          <span class="menu-label">Âm hiệu ứng</span>
         </button>
         <button id="themeToggleBtn" class="btn-icon" title="Chuyển chế độ Sáng / Tối" aria-label="Đổi giao diện">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -69,6 +87,7 @@
             <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
+          <span class="menu-label">Sáng / Tối</span>
         </button>
         <button id="resetProgressBtn" class="btn-ghost btn-sm" title="Quản lý tiến độ">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -78,33 +97,38 @@
         </button>
       </div>
     </div>
+  </header>
 
-    <!-- Navigation Tabs -->
+  <!-- Navigation Tabs (top bar on desktop, bottom bar on mobile) -->
     <nav class="main-nav" aria-label="Chế độ học">
       <div class="nav-container">
         <button class="nav-tab active" data-tab="flashcards">
           <span class="tab-icon">🗂️</span>
           <span class="tab-text">Thẻ Ghi Nhớ (Flashcard)</span>
+          <span class="tab-text-short">Thẻ nhớ</span>
         </button>
         <button class="nav-tab" data-tab="quiz">
           <span class="tab-icon">📝</span>
           <span class="tab-text">Luyện Trắc Nghiệm</span>
+          <span class="tab-text-short">Trắc nghiệm</span>
         </button>
         <button class="nav-tab" data-tab="typing">
           <span class="tab-icon">⌨️</span>
           <span class="tab-text">Luyện Điền Từ & Gõ</span>
+          <span class="tab-text-short">Gõ đáp án</span>
         </button>
         <button class="nav-tab" data-tab="vocab">
           <span class="tab-icon">🧩</span>
           <span class="tab-text">Ghép Từ Vựng</span>
+          <span class="tab-text-short">Ghép từ</span>
         </button>
         <button class="nav-tab" data-tab="directory">
           <span class="tab-icon">📚</span>
           <span class="tab-text">Tra Cứu 50 Câu</span>
+          <span class="tab-text-short">Tra cứu</span>
         </button>
       </div>
     </nav>
-  </header>
 
   <!-- Main Content Container -->
   <main class="app-main">
@@ -148,7 +172,7 @@
             <div id="cardProgressBar" class="card-progress-fill" style="width: 2%;"></div>
           </div>
           <div class="card-shortcuts-hint">
-            <span>Phím tắt: [Khoảng trắng] Lật thẻ • [←] Chưa thuộc • [→] Đã thuộc</span>
+            <span>Phím tắt: [Khoảng trắng] Lật thẻ • [←] Câu trước • [→] Đã thuộc & câu sau • [S] Gắn sao</span>
           </div>
         </div>
 
@@ -200,7 +224,8 @@
                     <path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h14"/>
                     <path d="M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H3"/>
                   </svg>
-                  Bấm vào thẻ hoặc phím Cách để xem đáp án
+                  <span class="hint-pointer">Bấm vào thẻ hoặc phím Cách để xem đáp án</span>
+                  <span class="hint-touch">Chạm để lật thẻ • Vuốt ngang để chuyển câu</span>
                 </span>
               </div>
             </div>
@@ -270,7 +295,7 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
-            <span>Câu trước</span>
+            <span class="btn-label">Câu trước</span>
           </button>
 
           <button id="markUnmasteredBtn" class="btn-danger" title="Đánh dấu cần ôn tập lại">
@@ -296,7 +321,7 @@
           </button>
 
           <button id="nextCardBtn" class="btn-secondary" title="Câu tiếp theo (Mũi tên phải)">
-            <span>Câu sau</span>
+            <span class="btn-label">Câu sau</span>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9 18 15 12 9 6"/>
             </svg>

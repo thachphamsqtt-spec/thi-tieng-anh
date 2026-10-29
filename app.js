@@ -384,6 +384,21 @@ function initFlashcards() {
 
   flipBtn.addEventListener('click', handleFlip);
 
+  // Swipe left = next card, swipe right = previous card
+  let touchStartX = 0;
+  let touchStartY = 0;
+  card.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+    touchStartY = e.changedTouches[0].clientY;
+  }, { passive: true });
+  card.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      nextFlashcard(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
   // Next / Prev Card
   document.getElementById('nextCardBtn').addEventListener('click', () => nextFlashcard(1));
   document.getElementById('prevCardBtn').addEventListener('click', () => nextFlashcard(-1));
@@ -610,6 +625,7 @@ function nextFlashcard(direction) {
     state.currentCardIdx = state.flashcards.length - 1;
   }
   renderCurrentFlashcard();
+  scrollIntoViewIfAbove(document.querySelector('.flashcard-wrapper'));
 }
 
 // ==========================================
@@ -853,6 +869,7 @@ function handleQuizSelect(selectedOpt, selectedIdx, allOptions) {
   }
 
   explanationBox.classList.remove('hidden');
+  explanationBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   document.getElementById('quizCurrentScore').textContent = state.quizScore;
 }
 
@@ -885,6 +902,7 @@ function handleQuizTimeout(allOptions) {
     <strong>Dịch nghĩa:</strong> ${escapeHTML(currentQ.answer_vi)}
   `;
   explanationBox.classList.remove('hidden');
+  explanationBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function nextQuizQuestion() {
@@ -1576,11 +1594,35 @@ function initNavigation() {
       // Special re-render on tab switch if needed
       if (targetId === 'flashcards') renderCurrentFlashcard();
       if (targetId === 'directory') renderDirectoryQuestions();
+      window.scrollTo({ top: 0 });
     });
   });
 
+  // Settings dropdown (only visible on small screens)
+  const menuBtn = document.getElementById('settingsMenuBtn');
+  const actionsMenu = document.getElementById('headerActions');
+  const setMenuOpen = (open) => {
+    actionsMenu.classList.toggle('open', open);
+    menuBtn.setAttribute('aria-expanded', String(open));
+  };
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setMenuOpen(!actionsMenu.classList.contains('open'));
+  });
+  document.addEventListener('click', (e) => {
+    if (!actionsMenu.contains(e.target)) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setMenuOpen(false);
+  });
+  document.getElementById('resetProgressBtn').addEventListener('click', () => setMenuOpen(false));
+
   // Theme Toggle
   const themeBtn = document.getElementById('themeToggleBtn');
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const syncThemeMeta = () => {
+    if (themeMeta) themeMeta.content = state.settings.theme === 'light' ? '#ffffff' : '#0b1120';
+  };
   if (state.settings.theme === 'light') {
     document.body.classList.remove('dark-theme');
     document.body.classList.add('light-theme');
@@ -1597,8 +1639,10 @@ function initNavigation() {
       document.body.classList.add('dark-theme');
       state.settings.theme = 'dark';
     }
+    syncThemeMeta();
     state.saveToStorage();
   });
+  syncThemeMeta();
 
   // Sound Toggle
   const soundBtn = document.getElementById('soundToggleBtn');
@@ -1760,6 +1804,13 @@ function shuffleArray(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// Scroll an element back into view if the page has scrolled past its top
+function scrollIntoViewIfAbove(el) {
+  if (el && el.getBoundingClientRect().top < 0) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function escapeHTML(str) {
