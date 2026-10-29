@@ -1,0 +1,7 @@
+# Dev/data-prep files not needed by the static site
+*.py
+*.docx
+*.bat
+extracted_raw.json
+unknown_words.json
+questions_data.json

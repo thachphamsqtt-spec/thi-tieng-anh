@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ôn Tập 50 Câu Hỏi & Đáp Án Tiếng Anh Quân Đội | Mil-English Pro</title>
+  <meta name="description" content="Ứng dụng thông minh ôn tập 50 câu hỏi & đáp án tiếng Anh quân đội: Chuyển đổi số, Đổi mới sáng tạo, Chế độ ngày và tuần. Kèm từ vựng, phát âm, flashcard, trắc nghiệm và tra cứu.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+  <!-- Audio & Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-badge">
+          <svg class="icon-star" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <div class="brand-sub">HỌC VIỆN & ĐƠN VỊ • ÔN THI TIẾNG ANH CHUYÊN NGÀNH</div>
+          <h1 class="brand-title">MIL-ENGLISH PRO <span class="version-tag">50 Q&A</span></h1>
+        </div>
+      </div>
+
+      <!-- Quick Stats in Header -->
+      <div class="header-stats">
+        <div class="stat-pill" title="Tiến độ học thuộc">
+          <span class="stat-icon">🎯</span>
+          <span class="stat-label">Đã thuộc:</span>
+          <strong id="headerMasteredCount">0/50</strong>
+          <span class="stat-percent" id="headerPercent">(0%)</span>
+        </div>
+        <div class="stat-pill" title="Câu đã đánh dấu sao">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-label">Yêu thích:</span>
+          <strong id="headerStarredCount">0</strong>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <button id="ipaToggleBtn" class="btn-icon" title="Bật/Tắt hiển thị phiên âm IPA" aria-label="Bật/Tắt IPA">
+          <span class="ipa-indicator">IPA</span>
+        </button>
+        <button id="audioSpeedBtn" class="btn-icon" title="Tốc độ phát âm tiếng Anh" aria-label="Tốc độ giọng đọc">
+          <span class="speed-indicator">1.0x</span>
+        </button>
+        <button id="soundToggleBtn" class="btn-icon" title="Bật/Tắt hiệu ứng âm thanh" aria-label="Âm thanh hiệu ứng">
+          <svg class="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        </button>
+        <button id="themeToggleBtn" class="btn-icon" title="Chuyển chế độ Sáng / Tối" aria-label="Đổi giao diện">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <button id="resetProgressBtn" class="btn-ghost btn-sm" title="Quản lý tiến độ">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span>Tiến độ</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="main-nav" aria-label="Chế độ học">
+      <div class="nav-container">
+        <button class="nav-tab active" data-tab="flashcards">
+          <span class="tab-icon">🗂️</span>
+          <span class="tab-text">Thẻ Ghi Nhớ (Flashcard)</span>
+        </button>
+        <button class="nav-tab" data-tab="quiz">
+          <span class="tab-icon">📝</span>
+          <span class="tab-text">Luyện Trắc Nghiệm</span>
+        </button>
+        <button class="nav-tab" data-tab="typing">
+          <span class="tab-icon">⌨️</span>
+          <span class="tab-text">Luyện Điền Từ & Gõ</span>
+        </button>
+        <button class="nav-tab" data-tab="vocab">
+          <span class="tab-icon">🧩</span>
+          <span class="tab-text">Ghép Từ Vựng</span>
+        </button>
+        <button class="nav-tab" data-tab="directory">
+          <span class="tab-icon">📚</span>
+          <span class="tab-text">Tra Cứu 50 Câu</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="app-main">
+
+    <!-- ==================== TAB 1: FLASHCARDS ==================== -->
+    <section id="tab-flashcards" class="tab-content active">
+      <div class="tab-header">
+        <div class="tab-title-group">
+          <h2>Thẻ Ghi Nhớ Thông Minh</h2>
+          <p class="tab-subtitle">Đọc câu hỏi tiếng Anh, suy nghĩ đáp án, lật thẻ để kiểm tra và học từ vựng trọng tâm</p>
+        </div>
+        
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <button class="filter-chip active" data-filter="all">Tất cả (50)</button>
+            <button class="filter-chip" data-filter="part1">Phần 1: CĐS & Đổi mới (25)</button>
+            <button class="filter-chip" data-filter="part2">Phần 2: Chế độ Ngày & Tuần (25)</button>
+            <button class="filter-chip" data-filter="starred">Đã gắn sao ⭐ (<span id="starredCountBadge">0</span>)</button>
+            <button class="filter-chip" data-filter="unmastered">Cần ôn lại (<span id="unmasteredCountBadge">50</span>)</button>
+          </div>
+          <button id="shuffleCardsBtn" class="btn-secondary btn-sm" title="Xáo trộn ngẫu nhiên thứ tự thẻ">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+              <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+              <line x1="4" y1="4" x2="9" y2="9"/>
+            </svg>
+            <span>Xáo trộn</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Flashcard Section -->
+      <div class="flashcard-wrapper">
+        <!-- Card Progress Indicator -->
+        <div class="card-meta-bar">
+          <div class="card-counter">
+            Câu <span id="currentCardNum">1</span> / <span id="totalCardsNum">50</span>
+          </div>
+          <div class="card-progress-track">
+            <div id="cardProgressBar" class="card-progress-fill" style="width: 2%;"></div>
+          </div>
+          <div class="card-shortcuts-hint">
+            <span>Phím tắt: [Khoảng trắng] Lật thẻ • [←] Chưa thuộc • [→] Đã thuộc</span>
+          </div>
+        </div>
+
+        <!-- 3D Card -->
+        <div class="card-scene">
+          <div id="flashcard" class="flashcard" tabindex="0" role="button" aria-label="Thẻ ghi nhớ câu hỏi, bấm để lật xem đáp án">
+            
+            <!-- FRONT SIDE: QUESTION -->
+            <div class="card-face card-front">
+              <div class="card-top">
+                <span id="frontPartBadge" class="part-badge badge-p1">Phần 1: CĐS trong Quân đội</span>
+                <div class="card-top-actions">
+                  <button id="frontSpeakBtn" class="btn-icon-subtle" title="Phát âm câu hỏi (Tiếng Anh)" aria-label="Phát âm câu hỏi">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                  </button>
+                  <button id="frontStarBtn" class="btn-icon-subtle" title="Đánh dấu câu quan trọng" aria-label="Gắn dấu sao">
+                    <svg class="star-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="question-label">QUESTION</div>
+                <h3 id="frontQuestionEn" class="card-question-text">
+                  What was the Ministry of National Defence’s target for digital transformation by 2025?
+                </h3>
+                <div id="frontQuestionIpa" class="card-ipa-text">/wət wɑz.../</div>
+
+                <!-- Optional Translation Toggle -->
+                <div class="vietnamese-hint-box">
+                  <div class="hint-header">
+                    <span class="hint-title">Bản dịch tiếng Việt (gợi ý):</span>
+                    <button id="toggleFrontViBtn" class="btn-link-sm" type="button">Hiện tiếng Việt</button>
+                  </div>
+                  <p id="frontQuestionVi" class="hint-content blurred">
+                    Mục tiêu chuyển đổi số của Bộ Quốc phòng đến năm 2025 là gì?
+                  </p>
+                </div>
+              </div>
+
+              <div class="card-bottom">
+                <span class="flip-hint">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h14"/>
+                    <path d="M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                  Bấm vào thẻ hoặc phím Cách để xem đáp án
+                </span>
+              </div>
+            </div>
+
+            <!-- BACK SIDE: ANSWER & VOCAB -->
+            <div class="card-face card-back">
+              <div class="card-top">
+                <span id="backPartBadge" class="part-badge badge-p1">Phần 1: CĐS trong Quân đội</span>
+                <div class="card-top-actions">
+                  <button id="backSpeakBtn" class="btn-icon-subtle" title="Phát âm câu trả lời (Tiếng Anh)" aria-label="Phát âm đáp án">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                  </button>
+                  <button id="backStarBtn" class="btn-icon-subtle" title="Đánh dấu câu quan trọng" aria-label="Gắn dấu sao">
+                    <svg class="star-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body card-back-body">
+                <div class="answer-section">
+                  <div class="answer-label">CORRECT ANSWER</div>
+                  <h4 id="backAnswerEn" class="card-answer-text">
+                    Establishing e-government within the Ministry of National Defence, moving toward digital government.
+                  </h4>
+                  <div id="backAnswerIpa" class="card-ipa-text answer-ipa">/ɪˈstæblɪʃɪŋ.../</div>
+                  <div class="answer-vi-box">
+                    <span class="vi-icon">🇻🇳</span>
+                    <p id="backAnswerVi" class="card-answer-vi">
+                      Xây dựng Chính phủ điện tử trong Bộ Quốc phòng, tiến tới Chính phủ số.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Vocabulary Chips -->
+                <div class="vocab-section">
+                  <div class="vocab-label">
+                    <span>TỪ VỰNG TRỌNG TÂM (Bấm vào để nghe phát âm)</span>
+                  </div>
+                  <div id="backVocabChips" class="vocab-chips-container">
+                    <!-- Populated by JS -->
+                  </div>
+                </div>
+
+                <!-- Note section if any -->
+                <div id="backNoteBox" class="note-box hidden">
+                  <span class="note-icon">💡</span>
+                  <span id="backNoteText" class="note-text"></span>
+                </div>
+              </div>
+
+              <div class="card-bottom">
+                <span class="flip-hint">Bấm để quay lại câu hỏi</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Card Control Buttons -->
+        <div class="card-controls">
+          <button id="prevCardBtn" class="btn-secondary" title="Câu trước (Mũi tên trái)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            <span>Câu trước</span>
+          </button>
+
+          <button id="markUnmasteredBtn" class="btn-danger" title="Đánh dấu cần ôn tập lại">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <span>Chưa thuộc</span>
+          </button>
+
+          <button id="flipCardBtn" class="btn-primary" title="Lật thẻ (Phím Cách)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h14"/>
+              <path d="M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+            <span>Lật thẻ</span>
+          </button>
+
+          <button id="markMasteredBtn" class="btn-success" title="Đã ghi nhớ thành thạo câu này!">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Đã thuộc</span>
+          </button>
+
+          <button id="nextCardBtn" class="btn-secondary" title="Câu tiếp theo (Mũi tên phải)">
+            <span>Câu sau</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: QUIZ ==================== -->
+    <section id="tab-quiz" class="tab-content">
+      <div class="tab-header">
+        <div class="tab-title-group">
+          <h2>Luyện Thi Trắc Nghiệm 4 Lựa Chọn</h2>
+          <p class="tab-subtitle">Hệ thống tạo ngẫu nhiên các phương án gây nhiễu sát với đề thi thực tế để rèn luyện phản xạ</p>
+        </div>
+      </div>
+
+      <!-- Quiz Setup Screen -->
+      <div id="quizSetupScreen" class="quiz-setup-card">
+        <div class="setup-icon">🎯</div>
+        <h3>Tùy Chọn Đề Thi Thử</h3>
+        <p class="setup-desc">Chọn phạm vi ôn tập và số lượng câu hỏi để bắt đầu bài thi:</p>
+
+        <div class="setup-options-grid">
+          <div class="setup-field">
+            <label for="quizPartSelect">Phạm vi câu hỏi:</label>
+            <select id="quizPartSelect" class="form-select">
+              <option value="all">Toàn bộ 50 câu (Phần 1 & Phần 2)</option>
+              <option value="part1">Phần 1: CĐS & Đổi mới sáng tạo (Câu 1 - 25)</option>
+              <option value="part2">Phần 2: Chế độ ngày và tuần (Câu 26 - 50)</option>
+              <option value="unmastered">Chỉ các câu chưa thuộc</option>
+              <option value="starred">Chỉ các câu đã gắn sao ⭐</option>
+            </select>
+          </div>
+
+          <div class="setup-field">
+            <label for="quizCountSelect">Số lượng câu thi:</label>
+            <select id="quizCountSelect" class="form-select">
+              <option value="10">10 câu hỏi (Ôn tập nhanh)</option>
+              <option value="20" selected>20 câu hỏi (Tiêu chuẩn)</option>
+              <option value="30">30 câu hỏi (Nâng cao)</option>
+              <option value="50">Toàn bộ 50 câu (Thi thử toàn diện)</option>
+            </select>
+          </div>
+
+          <div class="setup-field">
+            <label for="quizTimerSelect">Thời gian mỗi câu:</label>
+            <select id="quizTimerSelect" class="form-select">
+              <option value="0">Không giới hạn thời gian (Tự do)</option>
+              <option value="30" selected>30 giây / câu (Chuẩn thi)</option>
+              <option value="20">20 giây / câu (Thử thách phản xạ)</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="startQuizBtn" class="btn-primary btn-lg">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span>Bắt Đầu Làm Bài Thi</span>
+        </button>
+      </div>
+
+      <!-- Active Quiz Screen -->
+      <div id="quizActiveScreen" class="quiz-active-card hidden">
+        <div class="quiz-status-bar">
+          <div class="quiz-progress-text">
+            Câu <span id="quizCurrentIndex">1</span> / <span id="quizTotalQuestions">20</span>
+          </div>
+          <div class="quiz-timer" id="quizTimerBox">
+            <span class="timer-icon">⏱️</span>
+            <span id="quizTimerCount">30</span>s
+          </div>
+          <div class="quiz-score-badge">
+            Điểm: <span id="quizCurrentScore">0</span>
+          </div>
+        </div>
+
+        <div class="quiz-progress-bar-wrap">
+          <div id="quizProgressBar" class="quiz-progress-bar" style="width: 5%;"></div>
+        </div>
+
+        <!-- Question Box -->
+        <div class="quiz-question-container">
+          <div class="quiz-question-header">
+            <span id="quizBadge" class="part-badge badge-p1">Câu 1 • Phần 1</span>
+            <div class="quiz-actions-top">
+              <button id="quizSpeakBtn" class="btn-icon-subtle" title="Nghe phát âm câu hỏi">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+              </button>
+              <button id="quizToggleViBtn" class="btn-ghost btn-xs" title="Xem/Ẩn dịch tiếng Việt">
+                Gợi ý TV
+              </button>
+            </div>
+          </div>
+
+          <h3 id="quizQuestionText" class="quiz-q-en">
+            What was the Ministry of National Defence’s target for digital transformation by 2025?
+          </h3>
+          <div id="quizQuestionIpa" class="card-ipa-text quiz-ipa"></div>
+          <p id="quizQuestionVi" class="quiz-q-vi hidden">
+            Mục tiêu chuyển đổi số của Bộ Quốc phòng đến năm 2025 là gì?
+          </p>
+        </div>
+
+        <!-- Options List -->
+        <div id="quizOptionsGrid" class="quiz-options-list">
+          <!-- 4 Options rendered by JS -->
+        </div>
+
+        <!-- Explanation card after choosing -->
+        <div id="quizExplanationBox" class="quiz-explanation hidden">
+          <div class="explanation-header">
+            <span id="quizResultIcon">✅</span>
+            <h4 id="quizResultHeading">Chính xác!</h4>
+          </div>
+          <p id="quizExplanationVi" class="explanation-vi"></p>
+          <div class="explanation-vocab">
+            <strong>Từ vựng ghi nhớ:</strong>
+            <div id="quizVocabChips" class="vocab-chips-container"></div>
+          </div>
+          <div class="explanation-action">
+            <button id="quizNextBtn" class="btn-primary">
+              <span>Câu kế tiếp</span>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Result Screen -->
+      <div id="quizResultScreen" class="quiz-result-card hidden">
+        <div class="result-badge-icon" id="resultTrophyIcon">🏆</div>
+        <h3 id="resultTitle">Hoàn Thành Bài Thi!</h3>
+        <p id="resultSubtitle" class="result-subtitle">Kết quả kiểm tra kiến thức của bạn</p>
+
+        <div class="score-circle-wrap">
+          <div class="score-circle">
+            <span id="resultScoreBig" class="score-big">18/20</span>
+            <span id="resultScorePercent" class="score-pct">90%</span>
+          </div>
+        </div>
+
+        <div class="result-stats-row">
+          <div class="res-stat-item">
+            <span class="res-stat-val correct" id="resStatCorrect">18</span>
+            <span class="res-stat-lbl">Trả lời đúng</span>
+          </div>
+          <div class="res-stat-item">
+            <span class="res-stat-val incorrect" id="resStatIncorrect">2</span>
+            <span class="res-stat-lbl">Trả lời sai</span>
+          </div>
+          <div class="res-stat-item">
+            <span class="res-stat-val" id="resStatTime">04:15</span>
+            <span class="res-stat-lbl">Tổng thời gian</span>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button id="retryQuizBtn" class="btn-primary">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>Thi Lại Đề Này</span>
+          </button>
+          <button id="reviewWrongBtn" class="btn-secondary hidden">
+            <span>Xem & Ôn Lại Câu Sai (<span id="wrongCountNumber">0</span>)</span>
+          </button>
+          <button id="newQuizBtn" class="btn-ghost">
+            <span>Chọn Đề Thi Khác</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: TYPING & ACTIVE RECALL ==================== -->
+    <section id="tab-typing" class="tab-content">
+      <div class="tab-header">
+        <div class="tab-title-group">
+          <h2>Luyện Gõ & Điền Từ (Active Recall)</h2>
+          <p class="tab-subtitle">Tập phản xạ tự viết lại câu trả lời hoặc điền các từ khóa trọng tâm bằng tiếng Anh</p>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-group">
+            <select id="typingQuestionSelect" class="form-select form-select-sm">
+              <!-- Populated by JS -->
+            </select>
+          </div>
+          <button id="typingPrevBtn" class="btn-secondary btn-sm">Câu trước</button>
+          <button id="typingNextBtn" class="btn-secondary btn-sm">Câu sau</button>
+        </div>
+      </div>
+
+      <div class="typing-container">
+        <!-- Question Prompt -->
+        <div class="typing-prompt-card">
+          <div class="prompt-header">
+            <span id="typingPartBadge" class="part-badge badge-p1">Câu 1</span>
+            <button id="typingSpeakPromptBtn" class="btn-icon-subtle" title="Nghe câu hỏi">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+            </button>
+          </div>
+          <h3 id="typingQuestionEn" class="prompt-q-en">What was the Ministry of National Defence’s target for digital transformation by 2025?</h3>
+          <div id="typingQuestionIpa" class="card-ipa-text typing-ipa"></div>
+          <p id="typingQuestionVi" class="prompt-q-vi">Mục tiêu chuyển đổi số của Bộ Quốc phòng đến năm 2025 là gì?</p>
+        </div>
+
+        <!-- Typing Input Box -->
+        <div class="typing-workspace">
+          <div class="typing-instructions">
+            <span>✍️ Hãy gõ đáp án bằng tiếng Anh vào ô bên dưới:</span>
+            <div class="typing-tools">
+              <button id="typingHintBtn" class="btn-ghost btn-xs" title="Gợi ý chữ cái đầu">💡 Gợi ý chữ đầu</button>
+              <button id="typingShowAnswerBtn" class="btn-ghost btn-xs" title="Xem trước đáp án">👁️ Hiện đáp án</button>
+            </div>
+          </div>
+
+          <textarea id="typingInput" class="typing-textarea" rows="4" placeholder="Nhập câu trả lời bằng tiếng Anh tại đây... (Ví dụ: Establishing e-government within...)"></textarea>
+
+          <div id="typingHintDisplay" class="typing-hint-display hidden"></div>
+
+          <div class="typing-actions-bar">
+            <div class="accuracy-meter">
+              <span>Độ chính xác: </span>
+              <strong id="typingAccuracy">0%</strong>
+            </div>
+            <div class="typing-btns">
+              <button id="typingClearBtn" class="btn-secondary btn-sm">Xóa làm lại</button>
+              <button id="typingCheckBtn" class="btn-primary btn-sm">Kiểm tra kết quả</button>
+            </div>
+          </div>
+
+          <!-- Comparison Result -->
+          <div id="typingResultBox" class="typing-result hidden">
+            <div class="result-diff-header">
+              <span id="typingStatusBadge" class="status-badge">Kết quả đối chiếu:</span>
+            </div>
+            <div class="result-comparison">
+              <div class="comp-col">
+                <span class="comp-title">Bạn đã gõ:</span>
+                <p id="userTypedEcho" class="comp-text"></p>
+              </div>
+              <div class="comp-col">
+                <span class="comp-title">Đáp án chuẩn:</span>
+                <p id="standardAnswerEcho" class="comp-text highlight-correct"></p>
+              </div>
+            </div>
+            <div class="comp-vi">
+              <strong>Dịch nghĩa: </strong><span id="standardAnswerViEcho"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: VOCABULARY MATCH ==================== -->
+    <section id="tab-vocab" class="tab-content">
+      <div class="tab-header">
+        <div class="tab-title-group">
+          <h2>Mini-game Ghép Cặp Từ Vựng Quân Đội</h2>
+          <p class="tab-subtitle">Nối thuật ngữ quân sự tiếng Anh với nghĩa tiếng Việt tương ứng. Ôn trọn bộ 260+ thuật ngữ!</p>
+        </div>
+
+        <div class="vocab-game-controls">
+          <div class="game-stat">
+            <span>Điểm: </span><strong id="vocabGameScore">0</strong>
+          </div>
+          <div class="game-stat">
+            <span>Cặp còn lại: </span><strong id="vocabPairsLeft">6/6</strong>
+          </div>
+          <button id="newVocabRoundBtn" class="btn-secondary btn-sm">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>Ván mới</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="vocab-game-wrapper">
+        <div id="vocabGameGrid" class="vocab-cards-grid">
+          <!-- 12 cards (6 pairs) generated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: ALL QUESTIONS DIRECTORY ==================== -->
+    <section id="tab-directory" class="tab-content">
+      <div class="tab-header">
+        <div class="tab-title-group">
+          <h2>Tra Cứu Toàn Bộ 50 Câu Hỏi & Đáp Án</h2>
+          <p class="tab-subtitle">Danh mục tra cứu song ngữ đầy đủ, hỗ trợ tìm kiếm nhanh, ẩn/hiện tiếng Việt để tự dịch và in tài liệu</p>
+        </div>
+
+        <div class="directory-toolbar">
+          <!-- Search box -->
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="dirSearchInput" placeholder="Tìm theo từ khóa (Anh / Việt, câu hỏi, đáp án, từ vựng)..." class="search-input">
+            <button id="clearSearchBtn" class="clear-search-btn hidden" title="Xóa tìm kiếm">✕</button>
+          </div>
+
+          <!-- Quick Visibility Toggles -->
+          <div class="view-toggles">
+            <button id="toggleAllViBtn" class="btn-secondary btn-sm" title="Ẩn toàn bộ dịch tiếng Việt để luyện tự đọc hiểu">
+              <span class="icon-eye">👁️</span>
+              <span id="toggleAllViText">Ẩn tiếng Việt</span>
+            </button>
+            <button id="toggleAllIpaBtn" class="btn-secondary btn-sm" title="Ẩn/Hiện phiên âm IPA toàn bộ câu">
+              <span class="icon-eye">🗣️</span>
+              <span id="toggleAllIpaText">Ẩn IPA</span>
+            </button>
+            <button id="toggleAllAnswersBtn" class="btn-secondary btn-sm" title="Ẩn đáp án để tự kiểm tra bản thân">
+              <span class="icon-eye">🔒</span>
+              <span id="toggleAllAnswersText">Ẩn đáp án</span>
+            </button>
+            <button id="printCheatSheetBtn" class="btn-primary btn-sm" title="In hoặc lưu file PDF">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              <span>In / Lưu PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Secondary Filter -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <button class="filter-chip active" data-dir-filter="all">Tất cả (50)</button>
+            <button class="filter-chip" data-dir-filter="part1">Phần 1: CĐS & Đổi mới (25)</button>
+            <button class="filter-chip" data-dir-filter="part2">Phần 2: Chế độ ngày, tuần (25)</button>
+            <button class="filter-chip" data-dir-filter="starred">Đã gắn sao ⭐</button>
+            <button class="filter-chip" data-dir-filter="mastered">Đã thuộc ✅</button>
+            <button class="filter-chip" data-dir-filter="unmastered">Chưa thuộc ⏳</button>
+          </div>
+          <div class="dir-count-info">
+            Hiển thị: <strong id="dirFilteredCount">50</strong> / 50 câu
+          </div>
+        </div>
+      </div>
+
+      <!-- Questions List -->
+      <div id="questionsList" class="questions-accordion-list">
+        <!-- 50 question items populated by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Progress & Management Modal -->
+  <dialog id="progressModal" class="app-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Báo Cáo Tiến Độ Ôn Tập</h3>
+        <button id="closeModalBtn" class="btn-close" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="progress-overview">
+          <div class="overview-circle">
+            <span id="modalMasteredPercent" class="ov-pct">0%</span>
+            <span class="ov-lbl">Mức độ thuộc bài</span>
+          </div>
+          <div class="overview-stats">
+            <div class="ov-row">
+              <span>Đã thuộc thành thạo:</span>
+              <strong id="modalMasteredCount">0 / 50 câu</strong>
+            </div>
+            <div class="ov-row">
+              <span>Cần tiếp tục ôn:</span>
+              <strong id="modalUnmasteredCount">50 câu</strong>
+            </div>
+            <div class="ov-row">
+              <span>Đã gắn sao ưu tiên:</span>
+              <strong id="modalStarredCount">0 câu</strong>
+            </div>
+            <div class="ov-row">
+              <span>Thuật ngữ từ vựng:</span>
+              <strong>261 thuật ngữ</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section-title">Tiến Độ Theo Chuyên Đề</div>
+        <div class="part-progress-block">
+          <div class="part-prog-header">
+            <span>Phần 1: CĐS & Đổi Mới Sáng Tạo</span>
+            <strong id="modalPart1Prog">0/25 (0%)</strong>
+          </div>
+          <div class="prog-bar-mini">
+            <div id="modalPart1Bar" class="prog-bar-mini-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <div class="part-progress-block">
+          <div class="part-prog-header">
+            <span>Phần 2: Chế Độ Ngày Và Tuần</span>
+            <strong id="modalPart2Prog">0/25 (0%)</strong>
+          </div>
+          <div class="prog-bar-mini">
+            <div id="modalPart2Bar" class="prog-bar-mini-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="modal-actions-area">
+          <button id="exportDataBtn" class="btn-secondary btn-sm" title="Sao lưu tiến độ học sang file JSON">
+            📥 Xuất bản sao lưu
+          </button>
+          <label class="btn-secondary btn-sm file-upload-label" title="Khôi phục tiến độ từ file">
+            📤 Nhập bản sao lưu
+            <input type="file" id="importDataInput" accept=".json" class="hidden-input">
+          </label>
+          <button id="confirmResetBtn" class="btn-danger btn-sm" title="Xóa toàn bộ tiến độ và học lại từ đầu">
+            🗑️ Đặt lại tiến độ
+          </button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Load Questions Dataset & Main App Logic -->
+  <script src="questions_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
