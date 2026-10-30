@@ -1664,6 +1664,228 @@ body.hide-ipa .vocab-ipa {
 }
 
 /* ==========================================================================
+   TAB: VOCABULARY REVIEW
+   ========================================================================== */
+
+.word-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.word-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.segmented-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.segmented-btn:hover {
+  color: var(--text-bright);
+}
+
+.segmented-btn.active {
+  background: var(--cyan-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+}
+
+/* Word flashcard: shorter than the Q&A card, content centered */
+.word-scene,
+.word-card {
+  min-height: 320px;
+}
+
+.word-card .card-body,
+.word-card .card-front .card-body {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.word-main-text {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  line-height: 1.3;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+
+.word-main-text.word-text-vi {
+  font-family: var(--font-sans);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.word-answer-en {
+  color: var(--answer-color);
+  font-size: 1.7rem;
+}
+
+.word-ipa {
+  display: inline-block;
+}
+
+.word-vi-box {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.word-vi-box .card-answer-vi {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.word-source {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.word-known-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--emerald-primary);
+}
+
+/* Word list */
+.word-list-wrapper {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.word-list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.word-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.word-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.word-row.known {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.word-row .word-speak-btn {
+  flex-shrink: 0;
+}
+
+.word-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.word-row-en {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+}
+
+.word-row-en .vocab-en {
+  font-size: 1rem;
+}
+
+.word-row-vi {
+  margin-top: 2px;
+  font-size: 0.92rem;
+  color: var(--vocab-vi-color);
+  transition: filter var(--transition-normal);
+}
+
+.word-row-vi.concealed {
+  filter: blur(6px);
+  user-select: none;
+  cursor: pointer;
+}
+
+.word-row-src {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.word-known-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--soft-fill);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.word-row.known .word-known-btn {
+  border-color: var(--emerald-primary);
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.word-list-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.word-list-empty p {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.word-list-empty span {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .word-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
    TAB 4: VOCABULARY MATCH MINI-GAME
    ========================================================================== */
 
@@ -2179,7 +2401,7 @@ body.hide-ipa .vocab-ipa {
   }
 }
 
-/* Tablets / small laptops: short tab labels so all five tabs fit */
+/* Tablets / small laptops: short tab labels so all six tabs fit */
 @media (min-width: 721px) and (max-width: 1100px) {
   .nav-tab .tab-text {
     display: none;
@@ -2414,6 +2636,39 @@ body.hide-ipa .vocab-ipa {
     display: none;
   }
 
+  /* Word review toolbar: one row */
+  .word-toolbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .segmented-btn {
+    padding: 7px 11px;
+  }
+
+  .segmented-btn,
+  #wordDirectionBtn {
+    white-space: nowrap;
+  }
+
+  #wordShuffleBtn {
+    width: 40px;
+    height: 36px;
+    padding: 0;
+  }
+
+  #wordShuffleBtn span {
+    display: none;
+  }
+
+  .word-main-text {
+    font-size: 1.6rem;
+  }
+
+  .word-main-text.word-text-vi {
+    font-size: 1.35rem;
+  }
+
   /* Native controls at 16px so iOS Safari does not zoom in on focus */
   .form-select,
   .search-input,
@@ -2523,7 +2778,8 @@ body.hide-ipa .vocab-ipa {
     text-align: center;
   }
 
-  body:has(#tab-flashcards.active) .toast {
+  body:has(#tab-flashcards.active) .toast,
+  body:has(#tab-words.active #wordCardsView:not(.hidden)) .toast {
     bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 82px);
   }
 
@@ -2752,6 +3008,11 @@ body.hide-ipa .vocab-ipa {
   .header-stats .stat-pill + .stat-pill {
     display: none;
   }
+
+  /* Keep the word review toolbar on one row */
+  .seg-icon {
+    display: none;
+  }
 }
 
 /* Very narrow phones */
@@ -2800,6 +3061,7 @@ body.hide-ipa .vocab-ipa {
   #tab-flashcards,
   #tab-quiz,
   #tab-typing,
+  #tab-words,
   #tab-vocab {
     display: none !important;
   }

@@ -14,6 +14,7 @@ class AppState {
   constructor() {
     this.mastered = new Set();
     this.starred = new Set();
+    this.knownWords = new Set();
     this.settings = {
       theme: 'dark',
       soundEnabled: true,
@@ -46,6 +47,16 @@ class AppState {
     // Typing State
     this.typingCurrentQId = 1;
 
+    // Word Review State
+    this.wordFilter = 'all';
+    this.wordView = 'cards';
+    this.wordCards = [];
+    this.wordCardIdx = 0;
+    this.isWordFlipped = false;
+    this.wordReverse = false;
+    this.wordSearchQuery = '';
+    this.wordHideMeaning = false;
+
     // Vocab Match State
     this.vocabPairs = [];
     this.vocabSelectedCard = null;
@@ -68,6 +79,7 @@ class AppState {
         const data = JSON.parse(savedProg);
         if (data.mastered) this.mastered = new Set(data.mastered);
         if (data.starred) this.starred = new Set(data.starred);
+        if (data.knownWords) this.knownWords = new Set(data.knownWords);
       }
 
       const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
@@ -84,6 +96,7 @@ class AppState {
       const progData = {
         mastered: Array.from(this.mastered),
         starred: Array.from(this.starred),
+        knownWords: Array.from(this.knownWords),
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progData));
@@ -108,6 +121,15 @@ class AppState {
       this.starred.delete(id);
     } else {
       this.starred.add(id);
+    }
+    this.saveToStorage();
+  }
+
+  toggleKnownWord(key) {
+    if (this.knownWords.has(key)) {
+      this.knownWords.delete(key);
+    } else {
+      this.knownWords.add(key);
     }
     this.saveToStorage();
   }
@@ -384,20 +406,7 @@ function initFlashcards() {
 
   flipBtn.addEventListener('click', handleFlip);
 
-  // Swipe left = next card, swipe right = previous card
-  let touchStartX = 0;
-  let touchStartY = 0;
-  card.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].clientX;
-    touchStartY = e.changedTouches[0].clientY;
-  }, { passive: true });
-  card.addEventListener('touchend', (e) => {
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    const dy = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      nextFlashcard(dx < 0 ? 1 : -1);
-    }
-  }, { passive: true });
+  addSwipeHandler(card, (dir) => nextFlashcard(dir));
 
   // Next / Prev Card
   document.getElementById('nextCardBtn').addEventListener('click', () => nextFlashcard(1));
@@ -1119,6 +1128,305 @@ function calculateSimilarity(s1, s2) {
 }
 
 // ==========================================
+// 7B. TAB: VOCABULARY REVIEW
+// ==========================================
+
+// One entry per distinct English term; meanings and source questions are merged
+const WORD_LIST = buildWordList();
+
+function buildWordList() {
+  const byKey = new Map();
+  QUESTIONS_DATA.forEach(q => {
+    (q.vocab || []).forEach(v => {
+      if (!v.en || !v.vi) return;
+      const key = v.en.trim().toLowerCase();
+      let word = byKey.get(key);
+      if (!word) {
+        word = { key, en: v.en.trim(), ipa: v.ipa || '', meanings: [], parts: new Set(), qids: [] };
+        byKey.set(key, word);
+      }
+      v.vi.split(',').map(m => m.trim()).filter(Boolean).forEach(m => {
+        if (!word.meanings.some(x => x.toLowerCase() === m.toLowerCase())) word.meanings.push(m);
+      });
+      word.parts.add(q.part);
+      if (!word.qids.includes(q.id)) word.qids.push(q.id);
+    });
+  });
+  return Array.from(byKey.values()).map(w => ({ ...w, vi: w.meanings.join(', ') }));
+}
+
+function getFilteredWords(filterName) {
+  if (filterName === 'part1') return WORD_LIST.filter(w => w.parts.has(1));
+  if (filterName === 'part2') return WORD_LIST.filter(w => w.parts.has(2));
+  if (filterName === 'known') return WORD_LIST.filter(w => state.knownWords.has(w.key));
+  if (filterName === 'unknown') return WORD_LIST.filter(w => !state.knownWords.has(w.key));
+  return [...WORD_LIST];
+}
+
+function wordPartLabel(word) {
+  if (word.parts.size > 1) return 'Phần 1 & 2';
+  return word.parts.has(1) ? 'Phần 1: CĐS & Đổi Mới' : 'Phần 2: Chế Độ Ngày & Tuần';
+}
+
+function initWordReview() {
+  const card = document.getElementById('wordCard');
+
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    flipWordCard();
+  });
+  addSwipeHandler(card, (dir) => nextWordCard(dir));
+
+  document.getElementById('wordFlipBtn').addEventListener('click', flipWordCard);
+  document.getElementById('wordNextBtn').addEventListener('click', () => nextWordCard(1));
+  document.getElementById('wordPrevBtn').addEventListener('click', () => nextWordCard(-1));
+  document.getElementById('wordKnownBtn').addEventListener('click', () => markCurrentWord(true));
+  document.getElementById('wordUnknownBtn').addEventListener('click', () => markCurrentWord(false));
+
+  ['wordFrontSpeakBtn', 'wordBackSpeakBtn'].forEach(id => {
+    document.getElementById(id).addEventListener('click', (e) => {
+      e.stopPropagation();
+      const word = state.wordCards[state.wordCardIdx];
+      if (word) speakEnglish(word.en);
+    });
+  });
+
+  // Filter Chips
+  document.querySelectorAll('.filter-chip[data-word-filter]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip[data-word-filter]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      applyWordFilter(chip.getAttribute('data-word-filter'));
+    });
+  });
+
+  // Cards / List switch
+  document.querySelectorAll('.segmented-btn[data-word-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.segmented-btn[data-word-view]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.wordView = btn.getAttribute('data-word-view');
+      updateWordViewUI();
+    });
+  });
+
+  document.getElementById('wordDirectionBtn').addEventListener('click', () => {
+    state.wordReverse = !state.wordReverse;
+    document.getElementById('wordDirectionText').textContent = state.wordReverse ? 'Việt → Anh' : 'Anh → Việt';
+    renderCurrentWordCard();
+  });
+
+  document.getElementById('wordShuffleBtn').addEventListener('click', () => {
+    shuffleArray(state.wordCards);
+    state.wordCardIdx = 0;
+    renderCurrentWordCard();
+    showToast('Đã xáo trộn thứ tự các từ! 🔀');
+    sounds.playFlip();
+  });
+
+  document.getElementById('wordHideMeaningBtn').addEventListener('click', () => {
+    state.wordHideMeaning = !state.wordHideMeaning;
+    document.getElementById('wordHideMeaningText').textContent = state.wordHideMeaning ? 'Hiện nghĩa' : 'Che nghĩa';
+    renderWordList();
+  });
+
+  // List search
+  const searchInput = document.getElementById('wordSearchInput');
+  const clearSearchBtn = document.getElementById('wordClearSearchBtn');
+  searchInput.addEventListener('input', (e) => {
+    state.wordSearchQuery = e.target.value.trim().toLowerCase();
+    clearSearchBtn.classList.toggle('hidden', !state.wordSearchQuery);
+    renderWordList();
+  });
+  clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    state.wordSearchQuery = '';
+    clearSearchBtn.classList.add('hidden');
+    renderWordList();
+  });
+
+  applyWordFilter(state.wordFilter);
+  updateWordViewUI();
+}
+
+function applyWordFilter(filterName) {
+  state.wordFilter = filterName;
+  let list = getFilteredWords(filterName);
+
+  if (list.length === 0) {
+    showToast(filterName === 'known'
+      ? 'Chưa có từ nào được đánh dấu đã thuộc, đã hiển thị tất cả.'
+      : 'Không có từ nào thỏa mãn bộ lọc, đã hiển thị tất cả.', 'warning');
+    list = [...WORD_LIST];
+  }
+
+  state.wordCards = list;
+  state.wordCardIdx = 0;
+  renderCurrentWordCard();
+  renderWordList();
+}
+
+function updateWordViewUI() {
+  const isCards = state.wordView === 'cards';
+  document.getElementById('wordCardsView').classList.toggle('hidden', !isCards);
+  document.getElementById('wordListView').classList.toggle('hidden', isCards);
+  document.getElementById('wordDirectionBtn').classList.toggle('hidden', !isCards);
+  document.getElementById('wordShuffleBtn').classList.toggle('hidden', !isCards);
+  document.getElementById('wordHideMeaningBtn').classList.toggle('hidden', isCards);
+  if (!isCards) renderWordList();
+}
+
+function updateWordCounts() {
+  const known = WORD_LIST.filter(w => state.knownWords.has(w.key)).length;
+  document.getElementById('wordCountAll').textContent = WORD_LIST.length;
+  document.getElementById('wordCountKnown').textContent = known;
+  document.getElementById('wordCountUnknown').textContent = WORD_LIST.length - known;
+}
+
+function flipWordCard() {
+  state.isWordFlipped = !state.isWordFlipped;
+  document.getElementById('wordCard').classList.toggle('flipped', state.isWordFlipped);
+  sounds.playFlip();
+}
+
+function renderCurrentWordCard() {
+  updateWordCounts();
+  const word = state.wordCards[state.wordCardIdx];
+  if (!word) return;
+
+  state.isWordFlipped = false;
+  document.getElementById('wordCard').classList.remove('flipped');
+
+  // Meta & Progress
+  document.getElementById('wordCardNum').textContent = state.wordCardIdx + 1;
+  document.getElementById('wordCardTotal').textContent = state.wordCards.length;
+  const pct = Math.round(((state.wordCardIdx + 1) / state.wordCards.length) * 100);
+  document.getElementById('wordProgressBar').style.width = `${pct}%`;
+
+  // Badges
+  const partClass = word.parts.has(1) ? 'badge-p1' : 'badge-p2';
+  ['wordFrontBadge', 'wordBackBadge'].forEach(id => {
+    const badge = document.getElementById(id);
+    badge.className = `part-badge ${partClass}`;
+    badge.textContent = wordPartLabel(word);
+  });
+  document.getElementById('wordKnownTag').classList.toggle('hidden', !state.knownWords.has(word.key));
+
+  // Front: English prompt, or Vietnamese prompt when reversed
+  const frontText = document.getElementById('wordFrontText');
+  const frontIpa = document.getElementById('wordFrontIpa');
+  document.getElementById('wordFrontLabel').textContent = state.wordReverse ? 'TIẾNG VIỆT' : 'ENGLISH';
+  frontText.textContent = state.wordReverse ? word.vi : word.en;
+  frontText.classList.toggle('word-text-vi', state.wordReverse);
+  frontIpa.textContent = word.ipa;
+  frontIpa.classList.toggle('hidden', state.wordReverse || !word.ipa);
+  // In reverse mode the speaker would give away the answer
+  document.getElementById('wordFrontSpeakBtn').classList.toggle('hidden', state.wordReverse);
+
+  // Back: full entry
+  document.getElementById('wordBackEn').textContent = word.en;
+  const backIpa = document.getElementById('wordBackIpa');
+  backIpa.textContent = word.ipa;
+  backIpa.classList.toggle('hidden', !word.ipa);
+  document.getElementById('wordBackVi').textContent = word.vi;
+  document.getElementById('wordSourceText').textContent =
+    `Xuất hiện trong: ${word.qids.map(id => `Câu ${id}`).join(', ')}`;
+}
+
+function nextWordCard(direction) {
+  state.wordCardIdx += direction;
+  if (state.wordCardIdx >= state.wordCards.length) {
+    state.wordCardIdx = 0;
+    showToast('Bạn đã ôn hết lượt từ vựng! Chúc mừng! 🎉', 'success');
+  } else if (state.wordCardIdx < 0) {
+    state.wordCardIdx = state.wordCards.length - 1;
+  }
+  renderCurrentWordCard();
+  scrollIntoViewIfAbove(document.getElementById('wordCardsView'));
+}
+
+function markCurrentWord(known) {
+  const word = state.wordCards[state.wordCardIdx];
+  if (!word) return;
+  if (state.knownWords.has(word.key) !== known) {
+    state.toggleKnownWord(word.key);
+  }
+  if (known) {
+    showToast(`Đã thuộc: "${word.en}" 🎉`, 'success');
+    sounds.playChime();
+  } else {
+    showToast(`Đã đưa "${word.en}" vào danh sách cần ôn!`, 'warning');
+    sounds.playBuzz();
+  }
+  nextWordCard(1);
+}
+
+function renderWordList() {
+  updateWordCounts();
+  const container = document.getElementById('wordList');
+  container.innerHTML = '';
+
+  let list = getFilteredWords(state.wordFilter);
+  if (state.wordSearchQuery) {
+    const q = state.wordSearchQuery;
+    list = list.filter(w => w.en.toLowerCase().includes(q) || w.vi.toLowerCase().includes(q));
+  }
+
+  document.getElementById('wordListCount').textContent = list.length;
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="word-list-empty">
+        <p>🔍 Không tìm thấy từ vựng phù hợp.</p>
+        <span>Hãy thử xóa bộ lọc hoặc tìm kiếm từ khác.</span>
+      </div>
+    `;
+    return;
+  }
+
+  list.forEach(word => {
+    const row = document.createElement('div');
+    const isKnown = state.knownWords.has(word.key);
+    row.className = `word-row${isKnown ? ' known' : ''}`;
+    row.innerHTML = `
+      <button class="btn-icon-subtle word-speak-btn" title="Nghe phát âm">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+      <div class="word-row-main">
+        <div class="word-row-en">
+          <span class="vocab-en">${escapeHTML(word.en)}</span>
+          ${word.ipa ? `<span class="vocab-ipa">${escapeHTML(word.ipa)}</span>` : ''}
+        </div>
+        <div class="word-row-vi${state.wordHideMeaning ? ' concealed' : ''}">${escapeHTML(word.vi)}</div>
+        <div class="word-row-src">${word.qids.map(id => `Câu ${id}`).join(', ')}</div>
+      </div>
+      <button class="word-known-btn" title="${isKnown ? 'Đã thuộc (bấm để bỏ)' : 'Đánh dấu đã thuộc'}">${isKnown ? '✅' : '⚪'}</button>
+    `;
+
+    row.querySelector('.word-speak-btn').addEventListener('click', () => speakEnglish(word.en));
+
+    const viEl = row.querySelector('.word-row-vi');
+    viEl.addEventListener('click', () => viEl.classList.remove('concealed'));
+
+    const knownBtn = row.querySelector('.word-known-btn');
+    knownBtn.addEventListener('click', () => {
+      state.toggleKnownWord(word.key);
+      const nowKnown = state.knownWords.has(word.key);
+      row.classList.toggle('known', nowKnown);
+      knownBtn.textContent = nowKnown ? '✅' : '⚪';
+      knownBtn.title = nowKnown ? 'Đã thuộc (bấm để bỏ)' : 'Đánh dấu đã thuộc';
+      updateWordCounts();
+      if (nowKnown) sounds.playChime();
+    });
+
+    container.appendChild(row);
+  });
+}
+
+// ==========================================
 // 8. TAB 4: VOCABULARY MATCH MINI-GAME
 // ==========================================
 
@@ -1488,6 +1796,7 @@ function initProgressModal() {
     const data = {
       mastered: Array.from(state.mastered),
       starred: Array.from(state.starred),
+      knownWords: Array.from(state.knownWords),
       exportedAt: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1511,10 +1820,12 @@ function initProgressModal() {
         const data = JSON.parse(evt.target.result);
         if (data.mastered) state.mastered = new Set(data.mastered);
         if (data.starred) state.starred = new Set(data.starred);
+        if (data.knownWords) state.knownWords = new Set(data.knownWords);
         state.saveToStorage();
         updateModalStats();
         renderCurrentFlashcard();
         renderDirectoryQuestions();
+        applyWordFilter(state.wordFilter);
         showToast('Khôi phục tiến độ thành công! 🎉', 'success');
         sounds.playChime();
       } catch (err) {
@@ -1530,10 +1841,12 @@ function initProgressModal() {
     if (confirm('Bạn có chắc chắn muốn đặt lại toàn bộ tiến độ và học lại từ đầu không?')) {
       state.mastered.clear();
       state.starred.clear();
+      state.knownWords.clear();
       state.saveToStorage();
       updateModalStats();
       renderCurrentFlashcard();
       renderDirectoryQuestions();
+      applyWordFilter(state.wordFilter);
       showToast('Đã đặt lại tiến độ về 0.', 'info');
     }
   });
@@ -1549,6 +1862,8 @@ function updateModalStats() {
   document.getElementById('modalMasteredCount').textContent = `${mCount} / ${total} câu`;
   document.getElementById('modalUnmasteredCount').textContent = `${total - mCount} câu`;
   document.getElementById('modalStarredCount').textContent = `${sCount} câu`;
+  const knownWords = WORD_LIST.filter(w => state.knownWords.has(w.key)).length;
+  document.getElementById('modalWordsKnownCount').textContent = `${knownWords} / ${WORD_LIST.length} từ`;
 
   // Part 1 Progress
   const p1Total = QUESTIONS_DATA.filter(q => q.part === 1).length;
@@ -1594,6 +1909,7 @@ function initNavigation() {
       // Special re-render on tab switch if needed
       if (targetId === 'flashcards') renderCurrentFlashcard();
       if (targetId === 'directory') renderDirectoryQuestions();
+      if (targetId === 'words') renderCurrentWordCard();
       window.scrollTo({ top: 0 });
     });
   });
@@ -1769,6 +2085,26 @@ function initKeyboardShortcuts() {
         const ipaBtn = document.getElementById('ipaToggleBtn');
         if (ipaBtn) ipaBtn.click();
       }
+    } else if (state.activeTab === 'words' && state.wordView === 'cards') {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flipWordCard();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        // Mark known & next
+        const word = state.wordCards[state.wordCardIdx];
+        if (word && !state.knownWords.has(word.key)) {
+          state.toggleKnownWord(word.key);
+          sounds.playChime();
+        }
+        nextWordCard(1);
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        nextWordCard(-1);
+      } else if (e.key.toLowerCase() === 'v') {
+        const word = state.wordCards[state.wordCardIdx];
+        if (word) speakEnglish(word.en);
+      }
     } else if (state.activeTab === 'quiz') {
       if (['Digit1', 'Digit2', 'Digit3', 'Digit4', 'KeyA', 'KeyB', 'KeyC', 'KeyD'].includes(e.code)) {
         let optIdx = 0;
@@ -1806,6 +2142,23 @@ function shuffleArray(arr) {
   return arr;
 }
 
+// Swipe left calls onSwipe(1) (next), swipe right calls onSwipe(-1) (previous)
+function addSwipeHandler(el, onSwipe) {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  el.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+    touchStartY = e.changedTouches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      onSwipe(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+}
+
 // Scroll an element back into view if the page has scrolled past its top
 function scrollIntoViewIfAbove(el) {
   if (el && el.getBoundingClientRect().top < 0) {
@@ -1838,6 +2191,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFlashcards();
   initQuiz();
   initTyping();
+  initWordReview();
   initVocabGame();
   initDirectory();
   initProgressModal();
