@@ -16,6 +16,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="styles.css">
+  <!-- Installable app (PWA) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 </head>
 <body class="dark-theme">
   <!-- Audio & Confetti Canvas -->
@@ -64,6 +68,12 @@
 
       <!-- Header Actions -->
       <div class="header-actions" id="headerActions">
+        <button id="installAppBtn" class="btn-ghost btn-sm install-btn hidden" title="Cài ứng dụng lên điện thoại / máy tính để dùng khi không có mạng">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Cài ứng dụng</span>
+        </button>
         <button id="ipaToggleBtn" class="btn-icon" title="Bật/Tắt hiển thị phiên âm IPA" aria-label="Bật/Tắt IPA">
           <span class="ipa-indicator">IPA</span>
           <span class="menu-label">Phiên âm IPA</span>
@@ -933,6 +943,39 @@
             🗑️ Đặt lại tiến độ
           </button>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Install Help Modal (iPhone / browsers without an install prompt) -->
+  <dialog id="installModal" class="app-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Cài Ứng Dụng Lên Điện Thoại</h3>
+        <button id="closeInstallModalBtn" class="btn-close" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="install-intro">Sau khi cài, ứng dụng có biểu tượng riêng trên màn hình chính và <strong>dùng được khi không có mạng</strong>. Tiến độ học vẫn được giữ trên máy.</p>
+
+        <div id="installStepsIos" class="install-steps">
+          <div class="modal-section-title">iPhone / iPad (Safari)</div>
+          <ol>
+            <li>Mở trang này bằng <strong>Safari</strong>.</li>
+            <li>Bấm nút <strong>Chia sẻ</strong> <span class="install-glyph">⬆️</span> ở thanh dưới.</li>
+            <li>Chọn <strong>Thêm vào MH chính</strong> (Add to Home Screen) rồi bấm <strong>Thêm</strong>.</li>
+          </ol>
+        </div>
+
+        <div id="installStepsAndroid" class="install-steps">
+          <div class="modal-section-title">Android (Chrome)</div>
+          <ol>
+            <li>Bấm nút menu <strong>⋮</strong> ở góc trên bên phải.</li>
+            <li>Chọn <strong>Cài đặt ứng dụng</strong> hoặc <strong>Thêm vào màn hình chính</strong>.</li>
+          </ol>
+        </div>
+
+        <p class="install-note">💡 Hãy mở ứng dụng một lần khi có mạng để tải đầy đủ dữ liệu, sau đó có thể dùng ngoại tuyến.</p>
       </div>
     </div>
   </dialog>

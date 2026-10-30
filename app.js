@@ -1932,6 +1932,7 @@ function initNavigation() {
     if (e.key === 'Escape') setMenuOpen(false);
   });
   document.getElementById('resetProgressBtn').addEventListener('click', () => setMenuOpen(false));
+  document.getElementById('installAppBtn').addEventListener('click', () => setMenuOpen(false));
 
   // Theme Toggle
   const themeBtn = document.getElementById('themeToggleBtn');
@@ -2037,6 +2038,79 @@ function updateSoundButtonUI() {
 }
 
 // ==========================================
+// 11B. INSTALLABLE APP (PWA) & OFFLINE MODE
+// ==========================================
+
+function initInstallAndOffline() {
+  const installBtn = document.getElementById('installAppBtn');
+  const installModal = document.getElementById('installModal');
+  const ua = navigator.userAgent;
+  // iPadOS reports itself as a Mac
+  const isIos = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+  const isStandalone = () =>
+    window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+  let deferredPrompt = null;
+
+  const updateInstallButton = () => {
+    const canInstall = !isStandalone() && (deferredPrompt || isIos || isAndroid);
+    installBtn.classList.toggle('hidden', !canInstall);
+  };
+
+  // Chrome / Edge / Samsung Internet: native install prompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    updateInstallButton();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    updateInstallButton();
+    showToast('Đã cài ứng dụng! Mở từ biểu tượng trên màn hình chính 📲', 'success');
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      updateInstallButton();
+      return;
+    }
+    // No native prompt (iPhone, or Android before Chrome offers it): show manual steps
+    document.getElementById('installStepsIos').classList.toggle('hidden', isAndroid);
+    document.getElementById('installStepsAndroid').classList.toggle('hidden', isIos);
+    installModal.showModal();
+  });
+
+  document.getElementById('closeInstallModalBtn').addEventListener('click', () => installModal.close());
+  installModal.addEventListener('click', (e) => {
+    if (e.target === installModal) installModal.close();
+  });
+
+  updateInstallButton();
+
+  // Online / offline notices
+  window.addEventListener('offline', () => showToast('Mất kết nối mạng – ứng dụng vẫn dùng được ngoại tuyến 📴', 'warning'));
+  window.addEventListener('online', () => showToast('Đã có mạng trở lại 🌐', 'success'));
+
+  // Service worker caches the app for offline use (needs http/https, not file://)
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    const firstInstall = !navigator.serviceWorker.controller;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker registration failed:', err));
+    });
+    if (firstInstall) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        showToast('Ứng dụng đã sẵn sàng dùng khi không có mạng ✅', 'success');
+      }, { once: true });
+    }
+  }
+}
+
+// ==========================================
 // 12. KEYBOARD SHORTCUTS
 // ==========================================
 
@@ -2046,8 +2120,8 @@ function initKeyboardShortcuts() {
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
     // Leave browser shortcuts (Ctrl+C, Ctrl+S, ...) alone
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    // Ignore while the progress dialog is open
-    if (document.getElementById('progressModal').open) return;
+    // Ignore while a dialog is open
+    if (document.querySelector('dialog[open]')) return;
 
     if (state.activeTab === 'flashcards') {
       if (e.code === 'Space') {
@@ -2195,5 +2269,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initVocabGame();
   initDirectory();
   initProgressModal();
+  initInstallAndOffline();
   initKeyboardShortcuts();
 });
